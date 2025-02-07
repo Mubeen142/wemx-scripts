@@ -2,6 +2,20 @@
 
 set -euo pipefail
 
+###############################################################################
+# Helper function: Generate random alphanumeric password
+###############################################################################
+generate_password() {
+  # Default to 16 characters if not provided
+  local length="${1:-16}"
+
+  # Read from /dev/urandom, remove any characters that are not letters or digits,
+  # and then keep only the first $length characters.
+  head /dev/urandom \
+    | tr -dc 'A-Za-z0-9' \
+    | head -c "${length}"
+}
+
 # Define variables
 BASE_URL="https://download.herdphp.com"
 INSTALL_DIR="$HOME/.config/herd-lite/bin"
@@ -12,7 +26,7 @@ LARAVEL_BIN="$INSTALL_DIR/laravel"
 # Database variables (adjust as needed)
 DB_NAME="my_app_db"
 DB_USER="my_app_user"
-DB_PASS="SuperSecurePassword123!"
+DB_PASS="$(generate_password)"
 
 # Create the directory if it doesn't exist
 mkdir -p "$INSTALL_DIR"
@@ -90,12 +104,12 @@ apt-get update -y
 apt-get install -y nginx mysql-server
 
 info "Enabling and starting Nginx…\n"
-systemctl enable nginx
-systemctl start nginx
+#systemctl enable nginx
+#systemctl start nginx
 
 info "Enabling and starting MySQL…\n"
-systemctl enable mysql
-systemctl start mysql
+#systemctl enable mysql
+#systemctl start mysql
 
 ################################################################################
 # 2. Create a new MySQL database, user, and grant privileges
