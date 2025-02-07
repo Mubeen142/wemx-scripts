@@ -9,6 +9,11 @@ PHP_BIN="$INSTALL_DIR/php"
 COMPOSER_BIN="$INSTALL_DIR/composer"
 LARAVEL_BIN="$INSTALL_DIR/laravel"
 
+# Database variables (adjust as needed)
+DB_NAME="my_app_db"
+DB_USER="my_app_user"
+DB_PASS="SuperSecurePassword123!"
+
 # Create the directory if it doesn't exist
 mkdir -p "$INSTALL_DIR"
 
@@ -29,14 +34,12 @@ show_spinner() {
   printf "\b \b \n"
 }
 
-
 download_with_spinner() {
   local url=$1
   local output_file=$2
 
   # Start curl in the background, suppressing all output and errors
   curl -L "$url" -o "$output_file" > /dev/null 2>&1 &
-
 
   # Capture the PID of curl
   local curl_pid=$!
@@ -49,7 +52,6 @@ download_with_spinner() {
 
   # Check if the download was successful
   if [ $? -eq 0 ]; then
-    #success "File downloaded successfully to $output_file."
     chmod +x "$output_file"
   else
     error "Failed to download file from $url."
@@ -80,6 +82,37 @@ error() {
 
 clear
 
+################################################################################
+# 1. Install Nginx and MySQL
+################################################################################
+info "Updating package lists and installing Nginx + MySQL…\n"
+sudo apt-get update -y
+sudo apt-get install -y nginx mysql-server
+
+info "Enabling and starting Nginx…\n"
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+info "Enabling and starting MySQL…\n"
+sudo systemctl enable mysql
+sudo systemctl start mysql
+
+################################################################################
+# 2. Create a new MySQL database, user, and grant privileges
+################################################################################
+info "Creating MySQL database ($DB_NAME), user ($DB_USER), and granting privileges…\n"
+
+# If your root user in MySQL doesn’t require a password, you can do this:
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;"
+sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
+success "MySQL database, user, and privileges have been set up."
+
+################################################################################
+# 3. Download and install PHP, Composer, and Laravel
+################################################################################
 info "Downloading PHP binary…  "
 if [ "$(uname -m)" = "x86_64" ]; then
   download_with_spinner "$BASE_URL/herd-lite/linux/x64/php" "$PHP_BIN"
@@ -87,7 +120,6 @@ else
   download_with_spinner "$BASE_URL/herd-lite/linux/arm64/php" "$PHP_BIN"
 fi
 
-# Download the Composer binary
 info "Downloading Composer binary…  "
 download_with_spinner "$BASE_URL/herd-lite/composer" "$COMPOSER_BIN"
 
@@ -99,7 +131,6 @@ download_with_spinner "https://curl.se/ca/cacert.pem" "$INSTALL_DIR/cacert.pem"
 
 if [ ! -f "$INSTALL_DIR/php.ini" ]; then
   touch "$INSTALL_DIR/php.ini"
-
   echo "curl.cainfo=$INSTALL_DIR/cacert.pem" >> "$INSTALL_DIR/php.ini"
   echo "openssl.cafile=$INSTALL_DIR/cacert.pem" >> "$INSTALL_DIR/php.ini"
   echo "pcre.jit=0" >> "$INSTALL_DIR/php.ini"
@@ -179,36 +210,10 @@ box() {
 
   # Calculate lengths for padding and filling
   local msg_length=${#msg}
-  local filler=$(($width - $msg_length - 5))
+  local filler=$((width - msg_length - 5))
 
   local content_length=${#content}
-  local content_filler=$(($width - 4 - $content_length + 10))
+  local content_filler=$((width - 4 - content_length + 10))
 
   local content2_length=${#content2}
-  local content2_filler=$(($width - 4 - $content2_length + 8))
-
-  local footer_width=$(($width - 3))
-
-  if [ "$PATH_UPDATED" = true ]; then
-    local profile_content="Please restart your terminal or run \e[1m'source $PROFILE_FILE'\e[0m to update your PATH."
-  fi
-
-  # Top of the box with the message, using light gray color
-  printf "${light_gray}┌ ${reset}\033[42m\e[1m\033[30m${msg}\e[0m${reset} ${light_gray}$(printf '─%.0s' $(seq 1 $filler))${reset}\n"
-
-  printf "${light_gray}│ ${reset}${content}${reset}\n"
-  if [ "$PATH_UPDATED" = true ]; then
-    printf "${light_gray}│ ${reset}${profile_content}${reset}\n"
-  fi
-  printf "${light_gray}│ ${reset}\n"
-  printf "${light_gray}│ ${reset}${content2}${reset}\n"
-  printf "${light_gray}│ ${reset}${content3}${reset}\n"
-
-  # Bottom of the box, in light gray
-  printf "${light_gray}└$(printf '─%.0s' $(seq 1 $footer_width))${reset}\n"
-}
-
-# Example usage
-printf "\n"
-
-box "Success!" "\e[1mphp\e[0m, \e[1mcomposer\e[0m, and \e[1mlaravel\e[0m have been installed successfully." "For a \e[1mfully-featured dev environment\e[0m for PHP, check out" "Laravel Herd. \e[4m\e[34mhttps://herd.laravel.com"
+  local content2_filler=$((width - 4 - content2_leng
