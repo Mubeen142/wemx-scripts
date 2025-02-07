@@ -86,16 +86,16 @@ clear
 # 1. Install Nginx and MySQL
 ################################################################################
 info "Updating package lists and installing Nginx + MySQL…\n"
-sudo apt-get update -y
-sudo apt-get install -y nginx mysql-server
+apt-get update -y
+apt-get install -y nginx mysql-server
 
 info "Enabling and starting Nginx…\n"
-sudo systemctl enable nginx
-sudo systemctl start nginx
+systemctl enable nginx
+systemctl start nginx
 
 info "Enabling and starting MySQL…\n"
-sudo systemctl enable mysql
-sudo systemctl start mysql
+systemctl enable mysql
+systemctl start mysql
 
 ################################################################################
 # 2. Create a new MySQL database, user, and grant privileges
@@ -103,10 +103,10 @@ sudo systemctl start mysql
 info "Creating MySQL database ($DB_NAME), user ($DB_USER), and granting privileges…\n"
 
 # If your root user in MySQL doesn’t require a password, you can do this:
-sudo mysql -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;"
-sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';"
-sudo mysql -e "FLUSH PRIVILEGES;"
+mysql -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\`;"
+mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASS}';"
+mysql -e "GRANT ALL PRIVILEGES ON \`${DB_NAME}\`.* TO '${DB_USER}'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
 
 success "MySQL database, user, and privileges have been set up."
 
